@@ -230,3 +230,5 @@ _site/
 *.qmd~
 *.qmd#
 /.quarto/
+
+**/*.quarto_ipynb

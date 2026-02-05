@@ -1,0 +1,59 @@
+name: Deploy lesson site to pages
+
+on:
+  # Run on pushes targeting the default branch
+  push:
+    branches:
+      - main
+  
+  workflow_dispatch:
+
+  permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+  concurrency:
+    group: "pages"
+    cancel-in-progress: false
+
+  defaults:
+    run:
+      shell: bash
+  
+  jobs:
+    build:
+      runs-on: ubuntu-latest
+      env:
+        PYTHON_VERSION: "3.12"
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+          with:
+            submodules: recursive
+            fetch-depth: 0
+        - name: Install Python
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y python${{ env.PYTHON_VERSION }} python3-pip
+            pip install -r requirements.txt
+        - name: Install Quarto
+          uses: quarto-dev/quarto-actions/setup@v2
+          with:
+            version: 1.8.24
+        - name: Build with Quarto
+          run: |
+            quarto render --to html
+  
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          publish_dir: ./_site
